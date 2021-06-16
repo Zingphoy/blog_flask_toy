@@ -1,0 +1,4 @@
+flask >= 2.0.1
+sqlalchemy >= 1.4.0
+loguru >= 0.5.3
+ipdb >= 0.13.9
