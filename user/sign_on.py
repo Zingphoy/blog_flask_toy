@@ -8,11 +8,12 @@ blog_flask_toy/server/user.login
 
 from flask import Blueprint, request
 
-from utils import logger, restful_response, is_valid_email
+from base import restful_response
+from utils import is_valid_email
 from user.user_model import User
 from database import Session
 
-from utils import status_code
+from base import status_code
 
 sign_on = Blueprint('sign_on', __name__)
 
@@ -53,8 +54,14 @@ def user_register():
         return restful_response(status_code.NAME_OR_PASSWD_ERROR)
 
     if name and passwd:
+        email = req_data.get('email')
+        if not is_valid_email(email):
+            email = ''
         session = Session()
-        email = is_valid_email(req_data.get('email'))
+        is_exist = session.query(User).filter(User.email == email).first()
+        if is_exist:
+            # 看看flask怎么处理抛出的异常
+            raise Exception('fuck you')
         session.add(User(username=name, password=passwd, email=email))
         session.commit()
         session.close()

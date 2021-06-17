@@ -7,7 +7,7 @@ blog_flask_toy/utils.response
 """
 from flask import jsonify
 
-from utils import status_code
+from base import status_code
 
 
 def restful_response(code: int = 0, msg: str = 'success', data: dict = dict()):

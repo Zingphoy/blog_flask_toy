@@ -9,6 +9,6 @@ utils.exception
 """
 
 
-class EmailTooLongException(BaseException):
+class EmailTooLongException(Exception):
     def __repr__(self):
         return 'length of user email too long'

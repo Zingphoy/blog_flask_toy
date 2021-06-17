@@ -8,14 +8,14 @@ blog_flask_toy/utils.helper
 
 import re
 
-from utils.exception import EmailTooLongException
+from base.exception import EmailTooLongException
 
 
 def is_valid_email(email):
-    if len(email) >= 64:
+    if not email or isinstance(email, str) or len(email) >= 64:
         raise EmailTooLongException
     pattern = re.compile(r'[\w-.]+@[\w-]+(.[\w_-]+)+', re.DOTALL)
-    ret = pattern.findall(email)
-    if ret:
+    if pattern.findall(email):
         return True
-    return False
+    else:
+        return False
