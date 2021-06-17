@@ -12,8 +12,8 @@ from flask import Flask
 def run_server():
     app = Flask(__name__)
 
-    from user.sign_on import login
-    app.register_blueprint(login)
+    from user.sign_on import sign_on
+    app.register_blueprint(sign_on)
 
     app.run(port=8000, debug=True)
 

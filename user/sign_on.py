@@ -8,7 +8,7 @@ blog_flask_toy/server/user.login
 
 from flask import Blueprint, request
 
-from utils import logger, restful_response
+from utils import logger, restful_response, is_valid_email
 from user.user_model import User
 from database import Session
 
@@ -47,10 +47,14 @@ def user_register():
     req_data = request.get_json(force=True)
     if not req_data:
         return restful_response(status_code.NEED_JSON_FORMAT_PARAM)
+
     name, passwd = req_data.get('username'), req_data.get('password')
+    if not (name and passwd):
+        return restful_response(status_code.NAME_OR_PASSWD_ERROR)
+
     if name and passwd:
         session = Session()
-        email = is_valied_email(req_data.get('email'))
+        email = is_valid_email(req_data.get('email'))
         session.add(User(username=name, password=passwd, email=email))
         session.commit()
         session.close()
