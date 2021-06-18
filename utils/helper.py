@@ -12,9 +12,9 @@ from base.exception import EmailTooLongException
 
 
 def is_valid_email(email):
-    if not email or isinstance(email, str) or len(email) >= 64:
+    if len(email) >= 64:
         raise EmailTooLongException
-    pattern = re.compile(r'[\w-.]+@[\w-]+(.[\w_-]+)+', re.DOTALL)
+    pattern = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", re.DOTALL)
     if pattern.findall(email):
         return True
     else:

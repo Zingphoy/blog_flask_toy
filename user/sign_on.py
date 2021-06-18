@@ -49,20 +49,18 @@ def user_register():
     if not req_data:
         return restful_response(status_code.NEED_JSON_FORMAT_PARAM)
 
-    name, passwd = req_data.get('username'), req_data.get('password')
-    if not (name and passwd):
-        return restful_response(status_code.NAME_OR_PASSWD_ERROR)
+    name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
+    if not (name and passwd and email):
+        return restful_response(status_code.PARAM_ERROR)
 
-    if name and passwd:
-        email = req_data.get('email')
-        if not is_valid_email(email):
-            email = ''
-        session = Session()
-        is_exist = session.query(User).filter(User.email == email).first()
-        if is_exist:
-            # 看看flask怎么处理抛出的异常
-            raise Exception('fuck you')
-        session.add(User(username=name, password=passwd, email=email))
-        session.commit()
-        session.close()
-        return restful_response()
+    if not is_valid_email(email):
+        email = ''
+    session = Session()
+    is_exist = session.query(User).filter(User.email == email).first()
+    if is_exist:
+        # 看看flask怎么处理抛出的异常
+        raise Exception('fuck you')
+    session.add(User(username=name, password=passwd, email=email))
+    session.commit()
+    session.close()
+    return restful_response()
