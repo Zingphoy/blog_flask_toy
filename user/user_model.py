@@ -9,6 +9,8 @@ blog_flask_toy/server/user.user_model
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
+from database import engine
+
 Base = declarative_base()
 
 
@@ -23,4 +25,5 @@ class User(Base):
     def repr(self):
         return f'User information: {self.id} - {self.name} - {self.email}'
 
-# Base.metadata.create_all(engine)
+
+Base.metadata.create_all(engine)

@@ -7,13 +7,12 @@ blog_flask_toy/server/user.login
 """
 
 from flask import Blueprint, request
+from werkzeug.security import generate_password_hash
 
-from base import restful_response
-from utils import is_valid_email
-from user.user_model import User
 from database import Session
-
-from base import status_code
+from user.user_model import User
+from utils import is_valid_email
+from base import restful_response, status_code
 
 sign_on = Blueprint('sign_on', __name__)
 
@@ -48,7 +47,6 @@ def user_register():
     req_data = request.get_json(force=True)
     if not req_data:
         return restful_response(status_code.NEED_JSON_FORMAT_PARAM)
-
     name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
     if not (name and passwd and email):
         return restful_response(status_code.PARAM_ERROR)
@@ -58,9 +56,38 @@ def user_register():
     session = Session()
     is_exist = session.query(User).filter(User.email == email).first()
     if is_exist:
-        # 看看flask怎么处理抛出的异常
-        raise Exception('fuck you')
-    session.add(User(username=name, password=passwd, email=email))
-    session.commit()
-    session.close()
-    return restful_response()
+        return restful_response(status_code.USER_EMAIL_DUPLICATED)
+    salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
+    session.add(User(username=name, password=salted_passwd, email=email))
+    try:
+        session.commit()
+    except Exception:
+        session.close()
+        return restful_response(status_code.SERVER_INTERNAL_ERROR)
+    else:
+        return restful_response()
+    finally:
+        session.close()
+
+
+@sign_on.route('/', methods=['DELETE'])
+def user_delete():
+    req_data = request.get_json(force=True)
+    if not req_data:
+        return restful_response(status_code.NEED_JSON_FORMAT_PARAM)
+    name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
+    if not (name and passwd and email):
+        return restful_response(status_code.PARAM_ERROR)
+
+    salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
+    session = Session()
+    session.query(User).filter(User.username == name, User.email == email, User.password == salted_passwd)
+    try:
+        session.commit()
+    except Exception:
+        session.close()
+        return restful_response(status_code.SERVER_INTERNAL_ERROR)
+    else:
+        return restful_response()
+    finally:
+        session.close()
