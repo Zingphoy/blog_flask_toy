@@ -5,12 +5,14 @@ blog_flask_toy.server.main
 ~~~~~~~~~~~~~~~
 
 """
+import os
 
 from flask import Flask, render_template, jsonify
 
 from base.framework import ParamFormatInvalid
 
-app = Flask(__name__,template_folder='template')
+app = Flask(__name__, template_folder='template')
+app.config['SECRET_KEY'] = os.urandom(16)
 
 
 def page_not_found(e):

@@ -5,3 +5,4 @@ from sqlalchemy.orm import sessionmaker
 
 engine = create_engine('sqlite:///flask_blog.db', echo=True)
 Session = sessionmaker(bind=engine)
+

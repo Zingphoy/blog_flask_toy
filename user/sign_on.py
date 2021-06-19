@@ -6,8 +6,9 @@ blog_flask_toy/server/user.login
 
 """
 import re
+import pickle
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session, sessions
 from werkzeug.security import generate_password_hash
 
 from database import Session
@@ -39,6 +40,25 @@ def is_valid_email(email):
         return False
 
 
+@sign_on.before_request
+def init_database_session():
+    session['db_session'] = pickle.dumps(Session(), protocol=5)
+    print('init')
+
+
+@sign_on.teardown_request
+def close_database_session():
+    if 'db_session' not in session:
+        return
+    s = pickle.loads(session['db_session'])
+    try:
+        session_close = getattr(s, 'close')
+        session_close()
+    except AttributeError:
+        pass
+    print('close')
+
+
 """ ---------belows are routers--------- """
 
 
@@ -47,7 +67,6 @@ def user_login():
     req_data = request.get_json(silent=True)
     if not req_data:
         raise ParamFormatInvalid()
-        # return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
     session = Session()
     user = session.query(User).filter(User.username == req_data.get('username')) \
         .filter(User.password == req_data.get('password')).first()
@@ -64,7 +83,7 @@ def user_login():
 def user_logout():
     req_data = request.get_json(silent=True)
     if not req_data:
-        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
+        raise ParamFormatInvalid()
     return restful_response()
 
 
@@ -72,7 +91,7 @@ def user_logout():
 def user_register():
     req_data = request.get_json(silent=True)
     if not req_data:
-        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
+        raise ParamFormatInvalid()
     name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
     if not (name and passwd and email):
         return restful_response(status_code.PARAM_ERROR)
@@ -100,7 +119,7 @@ def user_register():
 def user_delete():
     req_data = request.get_json(silent=True)
     if not req_data:
-        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
+        raise ParamFormatInvalid()
     name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
     if not (name and passwd and email):
         return restful_response(status_code.PARAM_ERROR)
