@@ -6,9 +6,11 @@ blog_flask_toy.server.main
 
 """
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 
-app = Flask(__name__)
+from base.framework import ParamFormatInvalid
+
+app = Flask(__name__,template_folder='template')
 
 
 def page_not_found(e):
@@ -17,6 +19,15 @@ def page_not_found(e):
 
 def internal_server_error(e):
     return render_template('500.html'), 500
+
+
+def param_error(e):
+    return jsonify()
+
+
+@app.errorhandler(ParamFormatInvalid)
+def email_too_long(e):
+    return jsonify(e.to_dict())
 
 
 """

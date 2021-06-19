@@ -7,13 +7,13 @@ blog_flask_toy/server/user.login
 """
 import re
 
-from flask import Blueprint, request,jsonify
+from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 
 from database import Session
 from user.user_model import User
 from base import status_code
-from base.framework import restful_response
+from base.framework import restful_response, ParamFormatInvalid
 from user.exceptions import EmailTooLong
 
 sign_on = Blueprint('sign_on', __name__)
@@ -44,9 +44,10 @@ def is_valid_email(email):
 
 @sign_on.route('/login', methods=['POST'])
 def user_login():
-    req_data = request.get_json(force=True)
+    req_data = request.get_json(silent=True)
     if not req_data:
-        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
+        raise ParamFormatInvalid()
+        # return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
     session = Session()
     user = session.query(User).filter(User.username == req_data.get('username')) \
         .filter(User.password == req_data.get('password')).first()
@@ -61,7 +62,7 @@ def user_login():
 
 @sign_on.route('/logout', methods=['POST'])
 def user_logout():
-    req_data = request.get_json(force=True)
+    req_data = request.get_json(silent=True)
     if not req_data:
         return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
     return restful_response()
@@ -69,7 +70,7 @@ def user_logout():
 
 @sign_on.route('/register', methods=['POST'])
 def user_register():
-    req_data = request.get_json(force=True)
+    req_data = request.get_json(silent=True)
     if not req_data:
         return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
     name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
@@ -97,7 +98,7 @@ def user_register():
 
 @sign_on.route('/', methods=['DELETE'])
 def user_delete():
-    req_data = request.get_json(force=True)
+    req_data = request.get_json(silent=True)
     if not req_data:
         return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
     name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
