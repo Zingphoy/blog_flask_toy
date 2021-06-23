@@ -11,8 +11,13 @@ from flask import Flask, render_template, jsonify
 
 from base.framework import ParamFormatInvalid
 
+from flask_sqlalchemy_session import flask_scoped_session
+
 app = Flask(__name__, template_folder='template')
 app.config['SECRET_KEY'] = os.urandom(16)
+
+from database import session_factory
+session = flask_scoped_session(session_factory, app)
 
 
 def page_not_found(e):
