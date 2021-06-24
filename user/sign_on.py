@@ -6,16 +6,16 @@ blog_flask_toy/server/user.login
 
 """
 import re
-import pickle
 
-from flask import Blueprint, request, jsonify, session, sessions
+from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 
-from database import Session
-from user.user_model import User
+from database import open_session
 from base import status_code
 from base.framework import restful_response, ParamFormatInvalid
+from user.user_model import User
 from user.exceptions import EmailTooLong
+from utils import logger
 
 sign_on = Blueprint('sign_on', __name__)
 
@@ -40,25 +40,6 @@ def is_valid_email(email):
         return False
 
 
-@sign_on.before_request
-def init_database_session():
-    session['db_session'] = pickle.dumps(Session(), protocol=5)
-    print('init')
-
-
-@sign_on.teardown_request
-def close_database_session():
-    if 'db_session' not in session:
-        return
-    s = pickle.loads(session['db_session'])
-    try:
-        session_close = getattr(s, 'close')
-        session_close()
-    except AttributeError:
-        pass
-    print('close')
-
-
 """ ---------belows are routers--------- """
 
 
@@ -67,16 +48,16 @@ def user_login():
     req_data = request.get_json(silent=True)
     if not req_data:
         raise ParamFormatInvalid()
-    session = Session()
-    user = session.query(User).filter(User.username == req_data.get('username')) \
-        .filter(User.password == req_data.get('password')).first()
-    session.commit()
-    session.close()
-    if user:
-        return restful_response()
-    else:
-        code = status_code.NAME_OR_PASSWD_ERROR
-        return restful_response(code)
+
+    with open_session() as s:
+        user = s.query(User).filter(User.username == req_data.get('username')) \
+            .filter(User.password == req_data.get('password')).first()
+        s.commit()
+        if user:
+            return restful_response()
+        else:
+            code = status_code.NAME_OR_PASSWD_ERROR
+            return restful_response(code)
 
 
 @sign_on.route('/logout', methods=['POST'])
@@ -98,21 +79,21 @@ def user_register():
 
     if not is_valid_email(email):
         email = ''
-    session = Session()
-    is_exist = session.query(User).filter(User.email == email).first()
-    if is_exist:
-        return restful_response(status_code.USER_EMAIL_DUPLICATED)
-    salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
-    session.add(User(username=name, password=salted_passwd, email=email))
-    try:
-        session.commit()
-    except Exception:
-        session.close()
-        return restful_response(status_code.SERVER_INTERNAL_ERROR)
-    else:
-        return restful_response()
-    finally:
-        session.close()
+    with open_session() as s:
+        is_exist = s.query(User).filter(User.email == email).first()
+        if is_exist:
+            return restful_response(status_code.USER_EMAIL_DUPLICATED)
+        salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
+        s.add(User(username=name, password=salted_passwd, email=email))
+    # try:
+    #     session.commit()
+    # except Exception:
+    #     session.close()
+    #     return restful_response(status_code.SERVER_INTERNAL_ERROR)
+    # else:
+    #     return restful_response()
+    # finally:
+    #     session.close()
 
 
 @sign_on.route('/', methods=['DELETE'])
@@ -125,14 +106,14 @@ def user_delete():
         return restful_response(status_code.PARAM_ERROR)
 
     salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
-    session = Session()
-    session.query(User).filter(User.username == name, User.email == email, User.password == salted_passwd)
-    try:
-        session.commit()
-    except Exception:
-        session.close()
-        return restful_response(status_code.SERVER_INTERNAL_ERROR)
-    else:
-        return restful_response()
-    finally:
-        session.close()
+    with open_session() as s:
+        s.query(User).filter(User.username == name, User.email == email, User.password == salted_passwd)
+        try:
+            s.commit()
+        except Exception:
+            s.close()
+            return restful_response(status_code.SERVER_INTERNAL_ERROR)
+        else:
+            return restful_response()
+        finally:
+            s.close()
