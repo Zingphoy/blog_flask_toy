@@ -11,7 +11,8 @@ PARAM_ERROR = 1002
 
 NAME_OR_PASSWD_ERROR = 2001
 USER_EMAIL_DUPLICATED = 2002
-USER_NOT_FOUND = 2003
+USER_NAME_DUPLICATED = 2003
+USER_NOT_FOUND = 2004
 
 SERVER_INTERNAL_ERROR = 500
 
@@ -22,6 +23,7 @@ error_hints = {
 
     NAME_OR_PASSWD_ERROR: 'user name or password error',
     USER_EMAIL_DUPLICATED: 'user email has been registered',
+    USER_NAME_DUPLICATED: 'user name has been registered',
     USER_NOT_FOUND: 'user corresponding this email is not exist',
 
     SERVER_INTERNAL_ERROR: 'server internal error',

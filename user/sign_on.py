@@ -43,6 +43,29 @@ def is_valid_email(email):
 """ ---------belows are routers--------- """
 
 
+@sign_on.route('/register', methods=['POST'])
+def user_register():
+    req_data = request.get_json(silent=True)
+    if not req_data:
+        raise ParamFormatInvalid()
+    name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
+    if not (name and passwd and email):
+        return restful_response(status_code.PARAM_ERROR)
+
+    if not is_valid_email(email):
+        email = ''
+    with open_session() as s:
+        is_email_exist = s.query(User).filter(User.email == email).first()
+        if is_email_exist:
+            return restful_response(status_code.USER_EMAIL_DUPLICATED)
+        is_name_exist = s.query(User).filter(User.username == name).first()
+        if is_name_exist:
+            return restful_response(status_code.USER_NAME_DUPLICATED)
+        salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
+        s.add(User(username=name, password=salted_passwd, email=email))
+        return restful_response()
+
+
 @sign_on.route('/login', methods=['POST'])
 def user_login():
     req_data = request.get_json(silent=True)
@@ -66,34 +89,6 @@ def user_logout():
     if not req_data:
         raise ParamFormatInvalid()
     return restful_response()
-
-
-@sign_on.route('/register', methods=['POST'])
-def user_register():
-    req_data = request.get_json(silent=True)
-    if not req_data:
-        raise ParamFormatInvalid()
-    name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
-    if not (name and passwd and email):
-        return restful_response(status_code.PARAM_ERROR)
-
-    if not is_valid_email(email):
-        email = ''
-    with open_session() as s:
-        is_exist = s.query(User).filter(User.email == email).first()
-        if is_exist:
-            return restful_response(status_code.USER_EMAIL_DUPLICATED)
-        salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
-        s.add(User(username=name, password=salted_passwd, email=email))
-    # try:
-    #     session.commit()
-    # except Exception:
-    #     session.close()
-    #     return restful_response(status_code.SERVER_INTERNAL_ERROR)
-    # else:
-    #     return restful_response()
-    # finally:
-    #     session.close()
 
 
 @sign_on.route('/', methods=['DELETE'])
