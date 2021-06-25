@@ -10,12 +10,13 @@ import re
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 
-from database import open_session
+
 from base import status_code
 from base.framework import restful_response, ParamFormatInvalid
 from user.user_model import User
 from user.exceptions import EmailTooLong
 from utils import logger
+from database import get_session
 
 sign_on = Blueprint('sign_on', __name__)
 
@@ -26,6 +27,9 @@ sign_on = Blueprint('sign_on', __name__)
 def email_too_long(e):
     return jsonify(e.to_dict())
 
+
+def param_error(e):
+    return jsonify()
 
 """ ---------utility methods--------- """
 
@@ -49,12 +53,11 @@ def user_register():
     if not req_data:
         raise ParamFormatInvalid()
     name, passwd, email = req_data.get('username'), req_data.get('password'), req_data.get('email')
-    if not (name and passwd and email):
+
+    if not (name and passwd and email) or not is_valid_email(email):
         return restful_response(status_code.PARAM_ERROR)
 
-    if not is_valid_email(email):
-        email = ''
-    with open_session() as s:
+    with get_session() as s:
         is_email_exist = s.query(User).filter(User.email == email).first()
         if is_email_exist:
             return restful_response(status_code.USER_EMAIL_DUPLICATED)
@@ -63,6 +66,7 @@ def user_register():
             return restful_response(status_code.USER_NAME_DUPLICATED)
         salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
         s.add(User(username=name, password=salted_passwd, email=email))
+        s.commit()
         return restful_response()
 
 
@@ -72,15 +76,13 @@ def user_login():
     if not req_data:
         raise ParamFormatInvalid()
 
-    with open_session() as s:
-        user = s.query(User).filter(User.username == req_data.get('username')) \
-            .filter(User.password == req_data.get('password')).first()
-        s.commit()
+    with get_session() as s:
+        user = s.query(User).filter(User.username == req_data.get('username')).filter(
+            User.password == req_data.get('password')).first()
         if user:
             return restful_response()
         else:
-            code = status_code.NAME_OR_PASSWD_ERROR
-            return restful_response(code)
+            return restful_response(status_code.NAME_OR_PASSWD_ERROR)
 
 
 @sign_on.route('/logout', methods=['POST'])
@@ -101,14 +103,6 @@ def user_delete():
         return restful_response(status_code.PARAM_ERROR)
 
     salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
-    with open_session() as s:
-        s.query(User).filter(User.username == name, User.email == email, User.password == salted_passwd)
-        try:
-            s.commit()
-        except Exception:
-            s.close()
-            return restful_response(status_code.SERVER_INTERNAL_ERROR)
-        else:
-            return restful_response()
-        finally:
-            s.close()
+    with get_session() as s:
+        s.delete(User).filter(User.username == name, User.email == email, User.password == salted_passwd)
+        s.commit()

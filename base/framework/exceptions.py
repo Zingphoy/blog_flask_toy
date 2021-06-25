@@ -34,3 +34,10 @@ class ParamFormatInvalid(CustomException):
                  msg=error_hints[PARAM_JSON_FORMAT_ERROR],
                  payload=None):
         super().__init__(code, msg, payload)
+
+
+class ParamError(CustomException):
+    def __init__(self, code=PARAM_ERROR,
+                 msg=error_hints[PARAM_ERROR],
+                 payload=None):
+        super().__init__(code, msg, payload)
