@@ -23,7 +23,7 @@ def internal_server_error(e):
     return render_template('500.html'), 500
 
 
-@app.errorhandler(ParamFormatInvalid, PARAM_ERROR)
+@app.errorhandler(ParamFormatInvalid)
 def param_error(e):
     return jsonify(e.to_dict())
 

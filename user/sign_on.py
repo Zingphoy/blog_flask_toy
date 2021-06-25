@@ -3,13 +3,12 @@
 """
 blog_flask_toy/server/user.login
 ~~~~~~~~~~~~~~~
-
+基于jwt认证机制
 """
 import re
 
 from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from base import status_code
 from base.framework import restful_response, ParamFormatInvalid
@@ -31,6 +30,7 @@ def email_too_long(e):
 def param_error(e):
     return jsonify()
 
+
 """ ---------utility methods--------- """
 
 
@@ -42,6 +42,12 @@ def is_valid_email(email):
         return True
     else:
         return False
+
+
+def transform_password(passwd):
+    if passwd == '':
+        return None
+    return generate_password_hash(passwd, 'pbkdf2:sha256', 8)
 
 
 """ ---------belows are routers--------- """
@@ -64,8 +70,7 @@ def user_register():
         is_name_exist = s.query(User).filter(User.username == name).first()
         if is_name_exist:
             return restful_response(status_code.USER_NAME_DUPLICATED)
-        salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
-        s.add(User(username=name, password=salted_passwd, email=email))
+        s.add(User(username=name, password=transform_password(passwd), email=email))
         s.commit()
         return restful_response()
 
@@ -77,9 +82,8 @@ def user_login():
         raise ParamFormatInvalid()
 
     with get_session() as s:
-        user = s.query(User).filter(User.username == req_data.get('username')).filter(
-            User.password == req_data.get('password')).first()
-        if user:
+        user = s.query(User).filter(User.username == req_data.get('username')).first()
+        if check_password_hash(user.password, req_data.get('password')):
             return restful_response()
         else:
             return restful_response(status_code.NAME_OR_PASSWD_ERROR)
@@ -102,7 +106,6 @@ def user_delete():
     if not (name and passwd and email):
         return restful_response(status_code.PARAM_ERROR)
 
-    salted_passwd = generate_password_hash(passwd, 'pbkdf2:sha256', 8)
     with get_session() as s:
-        s.delete(User).filter(User.username == name, User.email == email, User.password == salted_passwd)
+        s.delete(User).filter(User.username == name, User.email == email, User.password == transform_password(passwd))
         s.commit()
