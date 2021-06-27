@@ -8,6 +8,7 @@ blog_flask_toy/utils.status_code
 # error codes
 PARAM_JSON_FORMAT_ERROR = 1001
 PARAM_ERROR = 1002
+OPERATION_NOT_PERMITTED = 1003
 
 NAME_OR_PASSWD_ERROR = 2001
 USER_EMAIL_DUPLICATED = 2002
@@ -20,6 +21,7 @@ SERVER_INTERNAL_ERROR = 500
 error_hints = {
     PARAM_JSON_FORMAT_ERROR: 'params should be json format',
     PARAM_ERROR: 'params are not valid, please check',
+    OPERATION_NOT_PERMITTED: 'operation is not permitted for normal user',
 
     NAME_OR_PASSWD_ERROR: 'user name or password error',
     USER_EMAIL_DUPLICATED: 'user email has been registered',

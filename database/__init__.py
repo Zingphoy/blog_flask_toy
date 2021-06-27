@@ -9,7 +9,7 @@ from sqlalchemy.exc import OperationalError
 
 from utils import logger
 
-__engine = create_engine('sqlite:///flask_blog.db', echo=True)
+__engine = create_engine('sqlite:///database/flask_blog.db', echo=True)
 __session_factory = sessionmaker(bind=__engine)
 
 

@@ -17,8 +17,9 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'user'
 
-    id = Column(Integer, autoincrement=600)
-    email = Column(String(64), nullable=True, primary_key=True)
+    # id = Column(Integer, autoincrement=600, primary_key=True)
+    id = Column(Integer, primary_key=True)  # sqlite底层实现特殊，不需要id自增写法
+    email = Column(String(64), nullable=True, index=True, unique=True)
     username = Column(String(64), nullable=False, index=True, unique=True)
     password = Column(String(16), nullable=False)
 
