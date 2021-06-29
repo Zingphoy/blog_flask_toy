@@ -105,7 +105,7 @@ def user_password_change():
 
 
 @sign_on.route('/', methods=['DELETE'])
-@admin_required
+@jwt_required()
 def user_delete():
     """用户账号注销"""
     req_data = request.get_json(silent=True)

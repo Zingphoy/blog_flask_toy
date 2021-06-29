@@ -45,6 +45,7 @@ def admin_required(fn):
     """被装饰的路由只允许管理员访问"""
 
     @functools.wraps(fn)
+    @jwt_required()
     def decorator(*args, **kwargs):
         verify_jwt_in_request()
         claims = get_jwt()
@@ -92,6 +93,7 @@ def is_token_expire():
 
 
 @app.after_request
+@jwt_required()
 def refresh_expiring_token(response):
     try:
         if is_token_expire():
@@ -103,3 +105,5 @@ def refresh_expiring_token(response):
         logger.warning(f'error occurs: {e}')
     finally:
         return response
+
+# todo: 还是单独放一个refresh接口用来更新access token吧

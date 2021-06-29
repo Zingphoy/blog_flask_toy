@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+
+<script>
+    function sendLogin(){
+        var name = document.getElementById('username');
+        var pd = document.getElementById('password');
+        var request = new XMLHttpRequest();
+        request.open('POST', "http://127.0.0.1:8000/login", true);
+        request.setRequestHeader("content-type","application/json");
+        request.send(JSON.stringify({"username":name,"password":pd}));
+    }
+
+    function sendRegister(){
+        var name = document.getElementById('username');
+        var pd = document.getElementById('password');
+        var email = document.getElementById('email');
+        var request = new XMLHttpRequest();
+        request.open('POST', "http://127.0.0.1:8000/register", true);
+        request.setRequestHeader("content-type","application/json");
+        request.send(JSON.stringify({"username":name,"password":pd,"email":email}));
+    }
+
+</script>
+
+<form onsubmit="sendLogin()">
+    用户名: <input type="text" name="username"><br>
+    密　码: <input type="text" name="password"><br>
+    <input type="submit" value="登录">
+</form>
+
+</p>
+
+<form  onsubmit="sendRegister()">
+    用户名: <input type="text" name="username"><br>
+    密　码: <input type="text" name="password"><br>
+    邮　箱: <input type="text" name="email"><br>
+    <input type="submit" value="注册">
+</form>
+
+</p>
+
+<form action="http://127.0.0.1:8000/hi" method="get">
+    <input type="submit" value="打招呼">
+</form>
+
+</body>
+</html>
