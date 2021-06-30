@@ -107,6 +107,12 @@ def refresh_expiring_token(response):
     finally:
         return response
 
+
 # todo: 还是单独放一个refresh接口用来更新access token吧
 
 # todo: 如果访问没带上jwt，是否可以把jwt的装饰器再封装，外部统一做try except返回response
+# login的时候赋予一个token
+@app.route('/token', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh_token():
+    pass
