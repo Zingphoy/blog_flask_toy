@@ -18,10 +18,9 @@ def get_session():
     session = __session_factory()
     try:
         yield session
-    except OperationalError as e:
+    except OperationalError as e:   # 注：在这里即使return 500也没有效果
         session.rollback()
-        logger.error(f'error occurs: {e}')
-        # 在这里即使return 500也没有效果
+        logger.error(f'error occurs in sqlalchemy session: {e}')
         raise e
     finally:
         session.close()

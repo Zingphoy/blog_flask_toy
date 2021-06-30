@@ -45,9 +45,8 @@ def admin_required(fn):
     """被装饰的路由只允许管理员访问"""
 
     @functools.wraps(fn)
-    @jwt_required()
     def decorator(*args, **kwargs):
-        verify_jwt_in_request()
+        jwt_header, jwt_data = verify_jwt_in_request()
         claims = get_jwt()
         if claims.get('is_admin'):
             return fn(*args, **kwargs)
@@ -95,6 +94,8 @@ def is_token_expire():
 @app.after_request
 @jwt_required()
 def refresh_expiring_token(response):
+    # todo: 并不是所有接口都要走这个流程的，如果用户未登录，就不需要refresh什么，需要要区分接口来做这个事情，不应该是after_request
+    verify_jwt_in_request()
     try:
         if is_token_expire():
             access_token = create_access_token(identity=get_jwt_identity(), fresh=True)
@@ -107,3 +108,5 @@ def refresh_expiring_token(response):
         return response
 
 # todo: 还是单独放一个refresh接口用来更新access token吧
+
+# todo: 如果访问没带上jwt，是否可以把jwt的装饰器再封装，外部统一做try except返回response
