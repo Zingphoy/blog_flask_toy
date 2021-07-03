@@ -9,8 +9,10 @@ import os
 import datetime as dt
 import functools
 
+from flask import abort
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt, get_jwt_identity, set_access_cookies
-from flask_jwt_extended import create_access_token, create_refresh_token, current_user, jwt_required
+from flask_jwt_extended import create_access_token, create_refresh_token, current_user
+from flask_jwt_extended.exceptions import NoAuthorizationError
 from base.framework import get_flask_app, restful_response
 from base import status_code
 from user.user_model import User
@@ -56,6 +58,23 @@ def admin_required(fn):
     return decorator
 
 
+def jwt_required(optional=False, fresh=False, refresh=False, locations=None):
+    """flask_jwt_extended自带的jwt_required上添加异常捕捉"""
+
+    def wrapper(fn):
+        @functools.wraps(fn)
+        def decorator(*args, **kwargs):
+            try:
+                verify_jwt_in_request(optional, fresh, refresh, locations)
+            except Exception:
+                abort(500, 'server internal error')
+            return fn(*args, **kwargs)
+
+        return decorator
+
+    return wrapper
+
+
 # @__jwt.user_identity_loader
 # def user_identity_lookup(user):
 #     """在jwt中添加一个sub字段，附上return的value"""
@@ -92,10 +111,13 @@ def is_token_expire():
 
 
 @app.after_request
-@jwt_required()
 def refresh_expiring_token(response):
-    # todo: 并不是所有接口都要走这个流程的，如果用户未登录，就不需要refresh什么，需要要区分接口来做这个事情，不应该是after_request
-    verify_jwt_in_request()
+    try:
+        verify_jwt_in_request()
+    except NoAuthorizationError:
+        # 不是所有请求都会带上正确jwt，对于没带jwt的请求，不做动作
+        return response
+
     try:
         if is_token_expire():
             access_token = create_access_token(identity=get_jwt_identity(), fresh=True)
@@ -110,9 +132,16 @@ def refresh_expiring_token(response):
 
 # todo: 还是单独放一个refresh接口用来更新access token吧
 
-# todo: 如果访问没带上jwt，是否可以把jwt的装饰器再封装，外部统一做try except返回response
-# login的时候赋予一个token
-@app.route('/token', methods=['POST'])
-@jwt_required(refresh=True)
-def refresh_token():
-    pass
+"""
+预期流程：
+1. login时生成token，token只在部分接口才需要被check
+2. 在每次请求结束的时候check token是否过期，如果token没有携带，则不需要check
+3. 如果token已经过期，重新生成token
+"""
+
+# # todo: 如果访问没带上jwt，是否可以把jwt的装饰器再封装，外部统一做try except返回response
+# # login的时候赋予一个token
+# @app.route('/token', methods=['POST'])
+# @jwt_required(refresh=True)
+# def refresh_token():
+#     pass

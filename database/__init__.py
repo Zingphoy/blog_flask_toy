@@ -9,13 +9,11 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.declarative import declarative_base
 
 from utils import logger
-from database import __engine
-
-Base = declarative_base()
-Base.metadata.create_all(__engine)
 
 __engine = create_engine('sqlite:///database/flask_blog.db', echo=True)
 __session_factory = sessionmaker(bind=__engine)
+Base = declarative_base()
+Base.metadata.create_all(__engine)
 
 
 @contextlib.contextmanager

@@ -82,8 +82,6 @@ def user_login():
     with get_session() as s:
         user = s.query(User).filter_by(username=req_data.get('username')).one_or_none()
         if user and check_password_hash(user.password, req_data.get('password')):
-            import ipdb
-            ipdb.set_trace()
             access_token = create_access_token(identity=user, fresh=True)
             refresh_token = create_refresh_token(identity=user)
             return restful_response(data={'access_token': access_token, 'refresh_token': refresh_token})
