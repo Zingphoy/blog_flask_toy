@@ -4,6 +4,11 @@
 blog_flask_toy/base/framework.jwt
 ~~~~~~~~~~~~~~~
 jwt token implements here
+
+预期流程：
+1. login时生成token，token只在部分接口才需要被check
+2. 在每次请求结束的时候check token是否过期，如果token没有携带，则不需要check
+3. 如果token已经过期，重新生成token
 """
 import os
 import datetime as dt
@@ -27,7 +32,7 @@ REFRESH_TIME = dt.timedelta(days=3)
 app.config['JWT_COOKIE_SECURE'] = True
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config['JWT_CSRF_IN_COOKIES'] = True
-app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_IDENTITY_CLAIM'] = 'signal'
 app.config['JWT_ACCESS_COOKIE_NAME'] = 'access_token'
 app.config['JWT_JSON_KEY'] = 'access_token'
@@ -66,8 +71,8 @@ def jwt_required(optional=False, fresh=False, refresh=False, locations=None):
         def decorator(*args, **kwargs):
             try:
                 verify_jwt_in_request(optional, fresh, refresh, locations)
-            except Exception:
-                abort(500, 'server internal error')
+            except NoAuthorizationError as e:
+                logger.error(f"verify jwt error. args:{args}, kwargs:{kwargs}, error:{e}")
             return fn(*args, **kwargs)
 
         return decorator
@@ -109,39 +114,22 @@ def is_token_expire():
     else:
         return False
 
-
-@app.after_request
-def refresh_expiring_token(response):
-    try:
-        verify_jwt_in_request()
-    except NoAuthorizationError:
-        # 不是所有请求都会带上正确jwt，对于没带jwt的请求，不做动作
-        return response
-
-    try:
-        if is_token_expire():
-            access_token = create_access_token(identity=get_jwt_identity(), fresh=True)
-            refresh_token = create_refresh_token(identity=get_jwt_identity())
-            set_access_cookies(response, access_token)
-            set_access_cookies(response, refresh_token)
-    except (RuntimeError, KeyError) as e:
-        logger.warning(f'error occurs: {e}')
-    finally:
-        return response
-
-
-# todo: 还是单独放一个refresh接口用来更新access token吧
-
-"""
-预期流程：
-1. login时生成token，token只在部分接口才需要被check
-2. 在每次请求结束的时候check token是否过期，如果token没有携带，则不需要check
-3. 如果token已经过期，重新生成token
-"""
-
-# # todo: 如果访问没带上jwt，是否可以把jwt的装饰器再封装，外部统一做try except返回response
-# # login的时候赋予一个token
-# @app.route('/token', methods=['POST'])
-# @jwt_required(refresh=True)
-# def refresh_token():
-#     pass
+# @app.after_request
+# def refresh_expiring_token(response):
+#     try:
+#         verify_jwt_in_request()
+#     except NoAuthorizationError as e:
+#         # 不是所有请求都会带上正确jwt，对于没带jwt的请求，不做动作
+#         logger.warning(e)
+#         return response
+#
+#     try:
+#         if is_token_expire():
+#             access_token = create_access_token(identity=get_jwt_identity(), fresh=True)
+#             refresh_token = create_refresh_token(identity=get_jwt_identity())
+#             set_access_cookies(response, access_token)
+#             set_access_cookies(response, refresh_token)
+#     except (RuntimeError, KeyError) as e:
+#         logger.warning(f'error occurs: {e}')
+#     finally:
+#         return response

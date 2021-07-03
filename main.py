@@ -8,8 +8,10 @@ blog_flask_toy.server.main
 import os
 
 from flask import render_template, jsonify
+from flask_cors import CORS
 
 from base.framework import ParamFormatInvalid, ParamError, get_flask_app
+from utils import logger
 
 
 def page_not_found(e):
@@ -22,6 +24,7 @@ def internal_server_error(e):
 
 def init_server():
     app = get_flask_app()
+    CORS(app)
 
     def common_error_handler(e):
         return jsonify(e.to_dict())

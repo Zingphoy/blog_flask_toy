@@ -6,48 +6,25 @@
 </head>
 <body>
 
-<script>
-    function sendLogin(){
-        var name = document.getElementById('username');
-        var pd = document.getElementById('password');
-        var request = new XMLHttpRequest();
-        request.open('POST', "http://127.0.0.1:8000/login", true);
-        request.setRequestHeader("content-type","application/json");
-        request.send(JSON.stringify({"username":name,"password":pd}));
-    }
+<script type="text/javascript" src="../js/main.js"></script>
 
-    function sendRegister(){
-        var name = document.getElementById('username');
-        var pd = document.getElementById('password');
-        var email = document.getElementById('email');
-        var request = new XMLHttpRequest();
-        request.open('POST', "http://127.0.0.1:8000/register", true);
-        request.setRequestHeader("content-type","application/json");
-        request.send(JSON.stringify({"username":name,"password":pd,"email":email}));
-    }
+用户名: <input type="text" id="username"><br>
+密　码: <input type="text" id="password"><br>
+<button onclick="sendLogin()">登录</button>
 
-</script>
+<p></p>
 
-<form onsubmit="sendLogin()">
-    用户名: <input type="text" name="username"><br>
-    密　码: <input type="text" name="password"><br>
-    <input type="submit" value="登录">
-</form>
 
-</p>
+用户名: <input type="text" id="usernameReg"><br>
+密　码: <input type="text" id="passwordReg"><br>
+邮　箱: <input type="text" name="email"><br>
+<button onclick="sendRegister()">注册</button>
 
-<form  onsubmit="sendRegister()">
-    用户名: <input type="text" name="username"><br>
-    密　码: <input type="text" name="password"><br>
-    邮　箱: <input type="text" name="email"><br>
-    <input type="submit" value="注册">
-</form>
 
-</p>
+<p></p>
 
-<form action="http://127.0.0.1:8000/hi" method="get">
-    <input type="submit" value="打招呼">
-</form>
+<button onclick="sendHi()">打招呼</button>
+
 
 </body>
 </html>

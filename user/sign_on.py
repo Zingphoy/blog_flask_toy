@@ -49,6 +49,36 @@ def transform_password(passwd):
 """ ---------belows are routers--------- """
 
 
+# todo: 如果已经登录了，则不需要再调用登录接口
+@sign_on.route('/login', methods=['POST'])
+@jwt_required(optional=True)
+def user_login():
+    req_data = request.get_json(silent=True)
+    if not req_data:
+        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
+
+    with get_session() as s:
+        user = s.query(User).filter_by(username=req_data.get('username')).one_or_none()
+        if user and check_password_hash(user.password, req_data.get('password')):
+            # 生成jwt
+            access_token = create_access_token(identity=user, fresh=True)
+            refresh_token = create_refresh_token(identity=user)
+            logger.info("222")
+            return restful_response(data={'access_token': access_token, 'refresh_token': refresh_token})
+        else:
+            logger.info("333")
+            return restful_response(status_code.NAME_OR_PASSWD_ERROR)
+
+
+@sign_on.route('/logout', methods=['POST'])
+@jwt_required(refresh=True)
+def user_logout():
+    req_data = request.get_json(silent=True)
+    if not req_data:
+        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
+    return restful_response()
+
+
 @sign_on.route('/register', methods=['POST'])
 @jwt_required(optional=True)
 def user_register():
@@ -69,32 +99,6 @@ def user_register():
             return restful_response(status_code.USER_NAME_DUPLICATED)
         s.add(User(username=name, password=transform_password(passwd), email=email))
         s.commit()
-    return restful_response()
-
-
-@sign_on.route('/login', methods=['POST'])
-@jwt_required(optional=True)
-def user_login():
-    req_data = request.get_json(silent=True)
-    if not req_data:
-        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
-
-    with get_session() as s:
-        user = s.query(User).filter_by(username=req_data.get('username')).one_or_none()
-        if user and check_password_hash(user.password, req_data.get('password')):
-            access_token = create_access_token(identity=user, fresh=True)
-            refresh_token = create_refresh_token(identity=user)
-            return restful_response(data={'access_token': access_token, 'refresh_token': refresh_token})
-        else:
-            return restful_response(status_code.NAME_OR_PASSWD_ERROR)
-
-
-@sign_on.route('/logout', methods=['POST'])
-@jwt_required(refresh=True)
-def user_logout():
-    req_data = request.get_json(silent=True)
-    if not req_data:
-        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
     return restful_response()
 
 
