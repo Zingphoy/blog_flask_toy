@@ -72,7 +72,7 @@ def jwt_required(optional=False, fresh=False, refresh=False, locations=None):
             try:
                 verify_jwt_in_request(optional, fresh, refresh, locations)
             except NoAuthorizationError as e:
-                logger.error(f"verify jwt error. args:{args}, kwargs:{kwargs}, error:{e}")
+                logger.info(f"verify jwt error: {e}, args:{args}, kwargs:{kwargs}")
             return fn(*args, **kwargs)
 
         return decorator

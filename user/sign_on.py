@@ -105,7 +105,17 @@ def user_register():
 @sign_on.route('/password_change', methods=['PUT'])
 @jwt_required(fresh=True)
 def user_password_change():
-    pass
+    req_data = request.get_json(silent=True)
+    if not req_data:
+        return restful_response(status_code.PARAM_JSON_FORMAT_ERROR)
+    passwd, email = req_data.get('username'), req_data.get('email')
+    if not (passwd and email):
+        return restful_response(status_code.PARAM_ERROR)
+
+    with get_session() as s:
+
+        s.commit()
+    return restful_response()
 
 
 @sign_on.route('/', methods=['DELETE'])
